@@ -47,6 +47,8 @@ void MenuOpenCloseEventHandler::RotateCamera()
 
 	if (m_camStateId < RE::CameraState::kThirdPerson) {
 		m_thirdForced = true;
+	} else if (m_camStateId == RE::CameraState::kMount) {
+		return;
 	}
 
 	auto thirdState = (RE::ThirdPersonState*)camera->cameraStates[RE::CameraState::kThirdPerson].get();
@@ -118,6 +120,10 @@ void MenuOpenCloseEventHandler::RotateCamera()
 
 void MenuOpenCloseEventHandler::ResetCamera()
 {
+	if (m_camStateId == RE::CameraState::kMount) {
+		return;
+	}
+	
 	auto camera = RE::PlayerCamera::GetSingleton();
 	auto thirdState = (RE::ThirdPersonState*)camera->cameraStates[RE::CameraState::kThirdPerson].get();
 	auto mod = RE::TESForm::LookupByID<RE::TESImageSpaceModifier>(0x000434BB);
@@ -133,7 +139,7 @@ void MenuOpenCloseEventHandler::ResetCamera()
 	mod->radialBlur.strength = m_radialBlurStrength;
 	mod->blurRadius->floatValue = m_blurRadius;
 
-	if (m_thirdForced) {
+	if (m_thirdForced || m_camStateId == RE::CameraState::kMount) {
 		auto cameraState = (RE::TESCameraState*)camera->cameraStates[m_camStateId].get();
 		camera->SetState(cameraState);
 	}
