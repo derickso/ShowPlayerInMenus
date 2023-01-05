@@ -47,6 +47,11 @@ void MenuOpenCloseEventHandler::RotateCamera()
 
 	if (m_camStateId < RE::CameraState::kThirdPerson) {
 		m_thirdForced = true;
+	} else if (player->IsInCombat()) {
+		ReadBoolSetting(mcm, "CombatSettings", "bEnableDuringCombat", bEnableInCombat);
+		if (!bEnableInCombat) {
+			return;
+		}
 	} else if (m_camStateId == RE::CameraState::kMount) {
 		return;
 	}
@@ -110,6 +115,7 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	// rotate and move camera
 	thirdState->targetZoomOffset = -0.1f;
 	thirdState->freeRotation.x = MATH_PI + fRotation - 0.5f;
+	thirdState->freeRotation.y = 0;
 	fOverShoulderCombatPosX->data.f = fXOffset - 75.0f;
 	fOverShoulderCombatAddY->data.f = fYOffset - 50.0f;
 	fOverShoulderCombatPosZ->data.f = fZOffset - 50.0f;
@@ -120,7 +126,14 @@ void MenuOpenCloseEventHandler::RotateCamera()
 
 void MenuOpenCloseEventHandler::ResetCamera()
 {
-	if (m_camStateId == RE::CameraState::kMount) {
+	auto player = RE::PlayerCharacter::GetSingleton();
+	
+	if (player->IsInCombat()) {
+		ReadBoolSetting(mcm, "CombatSettings", "bEnableDuringCombat", bEnableInCombat);
+		if (!bEnableInCombat) {
+			return;
+		}
+	} else if (m_camStateId == RE::CameraState::kMount) {
 		return;
 	}
 	

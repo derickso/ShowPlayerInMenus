@@ -90,6 +90,7 @@ public:
 	static inline bool bEnableInContainerMenu = false;
 	static inline bool bEnableInBarterMenu = false;
 	static inline bool bEnableInMagicMenu = false;
+	static inline bool bEnableInCombat = false;
 	static inline float fXOffset = 0.0;
 	static inline float fYOffset = 0.0;
 	static inline float fZOffset = 0.0;
