@@ -109,7 +109,6 @@ private:
 	MenuOpenCloseEventHandler& operator=(MenuOpenCloseEventHandler&&) = delete;
 
 	bool									m_thirdForced;
-	bool									m_toggleAnimCam;
 	bool									m_bDoRadialBlur;
 	float									m_targetZoomOffset;
 	float									m_fOverShoulderCombatPosX;

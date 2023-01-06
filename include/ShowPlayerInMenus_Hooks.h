@@ -84,6 +84,7 @@ namespace ShowPlayerInMenus
 						}
 						manager->UpdateMagic3D(obj, 0);
 						break;
+					case RE::FormType::Light:
 					case RE::FormType::Misc:
 						ReadBoolSetting(mcm, "InventoryMenuSettings", "bHideMisc3D", bInventoryHideMisc3D);
 						if (bInventoryHideMisc3D) {
@@ -140,6 +141,7 @@ namespace ShowPlayerInMenus
 						}
 						manager->UpdateMagic3D(obj, 0);
 						break;
+				case RE::FormType::Light:
 				case RE::FormType::Misc:
 						ReadBoolSetting(mcm, "ContainerMenuSettings", "bHideMisc3D", bContainerHideMisc3D);
 						if (bContainerHideMisc3D) {
@@ -195,6 +197,7 @@ namespace ShowPlayerInMenus
 						}
 						manager->UpdateMagic3D(obj, 0);
 						break;
+				case RE::FormType::Light:
 				case RE::FormType::Misc:
 						ReadBoolSetting(mcm, "BarterMenuSettings", "bHideMisc3D", bBarterHideMisc3D);
 						if (bBarterHideMisc3D) {

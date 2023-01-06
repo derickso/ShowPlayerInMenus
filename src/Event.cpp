@@ -84,7 +84,6 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	m_targetZoomOffset = thirdState->targetZoomOffset;
 	m_freeRotation = thirdState->freeRotation;
 	m_posOffsetExpected = thirdState->posOffsetExpected;
-	m_toggleAnimCam = thirdState->toggleAnimCam;
 	m_radialBlurStrength = mod->radialBlur.strength;
 	m_blurRadius = mod->blurRadius->floatValue;
 
@@ -142,10 +141,10 @@ void MenuOpenCloseEventHandler::ResetCamera()
 	auto mod = RE::TESForm::LookupByID<RE::TESImageSpaceModifier>(0x000434BB);
 
 	// restore original values
+	thirdState->toggleAnimCam = false;
 	thirdState->targetZoomOffset = m_targetZoomOffset;
 	thirdState->freeRotation = m_freeRotation;
 	thirdState->posOffsetExpected = thirdState->posOffsetActual = m_posOffsetExpected;
-	thirdState->toggleAnimCam = m_toggleAnimCam;
 	fOverShoulderCombatPosX->data.f = m_fOverShoulderCombatPosX;
 	fOverShoulderCombatAddY->data.f = m_fOverShoulderCombatAddY;
 	fOverShoulderCombatPosZ->data.f = m_fOverShoulderCombatPosZ;
