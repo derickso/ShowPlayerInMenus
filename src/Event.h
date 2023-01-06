@@ -12,6 +12,8 @@ SKSE::PluginHandle g_pluginHandle = SKSE::kInvalidPluginHandle;
 
 class InputEventHandler : public RE::BSTEventSink<RE::InputEvent*>
 {
+	bool allowRotation;
+
 public:
 	using EventResult = RE::BSEventNotifyControl;
 

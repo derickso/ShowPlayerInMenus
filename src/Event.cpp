@@ -7,12 +7,16 @@ constexpr auto MATH_PI = 3.14159265358979323846f;
 
 bool m_inMenu = false;
 uint32_t m_camStateId;
+float m_playerRotation;
+float fTurnSensitivity = 0.2f;
 RE::Setting* fOverShoulderCombatPosX;
 RE::Setting* fOverShoulderCombatAddY;
 RE::Setting* fOverShoulderCombatPosZ;
 
 //constexpr auto defaultSettingsPath = L"Data/MCM/Config/ShowPlayerInMenus/settings.ini";
 constexpr auto mcmSettingsPath = L"Data/MCM/Settings/ShowPlayerInMenus.ini";
+
+auto playerModel = RE::PlayerCharacter::GetSingleton();
 
 CSimpleIniA mcm;
 
@@ -34,6 +38,61 @@ auto InputEventHandler::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEven
 		}
 	}
 
+	auto player = RE::PlayerCharacter::GetSingleton();
+	if (!player || !player->Is3DLoaded())
+		return EventResult::kContinue;
+
+	auto ui = RE::UI::GetSingleton();
+
+	if (!ui || !m_inMenu)
+		return EventResult::kContinue;
+
+	for (auto event = *a_event; event; event = event->next) {
+		auto inputDevice = event->GetDevice();
+		if (inputDevice == RE::INPUT_DEVICE::kGamepad)
+			break;
+
+		switch (event->GetEventType()) {
+		case RE::INPUT_EVENT_TYPE::kButton:
+			{
+				auto buttonEvent = event->AsButtonEvent();
+				if (!buttonEvent || !buttonEvent->IsHeld()) {
+					allowRotation = false;
+					continue;
+				}
+
+				switch (inputDevice) {
+				case RE::INPUT_DEVICE::kKeyboard:
+					if (const auto key = static_cast<Key>(buttonEvent->GetIDCode()); key == 257) {
+						allowRotation = true;
+						continue;
+					}
+					break;
+				case RE::INPUT_DEVICE::kMouse:
+					if (const auto mouseButton = static_cast<MouseButton>(buttonEvent->GetIDCode()); mouseButton == (257 - 0x100)) {
+						allowRotation = true;
+						continue;
+					}
+					break;
+				}
+			}
+			continue;
+		case RE::INPUT_EVENT_TYPE::kMouseMove:
+			{
+				if (allowRotation) {
+					auto mouseEvent = reinterpret_cast<RE::MouseMoveEvent*>(event->AsIDEvent());
+					if (abs(mouseEvent->mouseInputX) < 5)
+						continue;
+					player->SetRotationZ(player->data.angle.z + ((mouseEvent->mouseInputX > 0 ? -1 : 1) * fTurnSensitivity));
+					auto thirdPersonState = static_cast<RE::ThirdPersonState*>(camera->currentState.get());
+					thirdPersonState->freeRotation.x -= ((mouseEvent->mouseInputX > 0 ? -1 : 1) * fTurnSensitivity);
+					player->Update3DPosition(true);
+				}
+			}
+			break;
+		}
+	}
+
 	return EventResult::kContinue;
 }
 
@@ -50,9 +109,11 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	} else if (player->IsInCombat()) {
 		ReadBoolSetting(mcm, "CombatSettings", "bEnableDuringCombat", bEnableInCombat);
 		if (!bEnableInCombat) {
+			m_inMenu = false;
 			return;
 		}
 	} else if (m_camStateId == RE::CameraState::kMount) {
+		m_inMenu = false;
 		return;
 	}
 
@@ -130,9 +191,11 @@ void MenuOpenCloseEventHandler::ResetCamera()
 	if (player->IsInCombat()) {
 		ReadBoolSetting(mcm, "CombatSettings", "bEnableDuringCombat", bEnableInCombat);
 		if (!bEnableInCombat) {
+			m_inMenu = false;
 			return;
 		}
 	} else if (m_camStateId == RE::CameraState::kMount) {
+		m_inMenu = false;
 		return;
 	}
 	
@@ -141,6 +204,7 @@ void MenuOpenCloseEventHandler::ResetCamera()
 	auto mod = RE::TESForm::LookupByID<RE::TESImageSpaceModifier>(0x000434BB);
 
 	// restore original values
+	player->data.angle.z = m_playerRotation;
 	thirdState->toggleAnimCam = false;
 	thirdState->targetZoomOffset = m_targetZoomOffset;
 	thirdState->freeRotation = m_freeRotation;
@@ -211,9 +275,12 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 			if (bEnableInInventoryMenu) {
 				m_inMenu = true;
 
-				if (a_event->opening)
+				if (a_event->opening) {
+					auto player = RE::PlayerCharacter::GetSingleton();
+					m_playerRotation = player->data.angle.z;
+					ReadFloatSetting(mcm, "PositionSettings", "fSensitivity", fTurnSensitivity);
 					OnInventoryOpen();
-				else
+				} else
 					OnInventoryClose();
 			}
 		} else if (name == uiStr->containerMenu)
@@ -224,9 +291,12 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 			if (bEnableInContainerMenu) {
 				m_inMenu = true;
 
-				if (a_event->opening)
+				if (a_event->opening) {
+					auto player = RE::PlayerCharacter::GetSingleton();
+					m_playerRotation = player->data.angle.z;
+					ReadFloatSetting(mcm, "PositionSettings", "fSensitivity", fTurnSensitivity);
 					OnInventoryOpen();
-				else
+				} else
 					OnInventoryClose();
 			}
 		} else if (name == uiStr->barterMenu) {
@@ -236,9 +306,12 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 			if (bEnableInBarterMenu) {
 				m_inMenu = true;
 
-				if (a_event->opening)
+				if (a_event->opening) {
+					auto player = RE::PlayerCharacter::GetSingleton();
+					m_playerRotation = player->data.angle.z;
+					ReadFloatSetting(mcm, "PositionSettings", "fSensitivity", fTurnSensitivity);
 					OnInventoryOpen();
-				else
+				} else
 					OnInventoryClose();
 			}
 		} else if (name == uiStr->magicMenu)
@@ -249,9 +322,12 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 			if (bEnableInMagicMenu) {
 				m_inMenu = true;
 
-				if (a_event->opening)
+				if (a_event->opening) {
+					auto player = RE::PlayerCharacter::GetSingleton();
+					m_playerRotation = player->data.angle.z;
+					ReadFloatSetting(mcm, "PositionSettings", "fSensitivity", fTurnSensitivity);
 					OnInventoryOpen();
-				else
+				} else
 					OnInventoryClose();
 			}
 		} 
