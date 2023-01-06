@@ -16,8 +16,6 @@ RE::Setting* fOverShoulderCombatPosZ;
 //constexpr auto defaultSettingsPath = L"Data/MCM/Config/ShowPlayerInMenus/settings.ini";
 constexpr auto mcmSettingsPath = L"Data/MCM/Settings/ShowPlayerInMenus.ini";
 
-auto playerModel = RE::PlayerCharacter::GetSingleton();
-
 CSimpleIniA mcm;
 
 // Input
