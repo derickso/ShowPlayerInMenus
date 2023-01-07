@@ -240,18 +240,18 @@ namespace ShowPlayerInMenus
 		static inline bool bInventoryHideBooksScrolls3D = true;
 		static inline bool bInventoryHideMisc3D = true;
 		static inline bool bInventoryHideWeapon3D = true;
-		static inline bool bContainerHideAlchemyItem3D = true;
-		static inline bool bContainerHideArmor3D = true;
-		static inline bool bContainerHideAmmo3D = true;
-		static inline bool bContainerHideBooksScrolls3D = true;
-		static inline bool bContainerHideMisc3D = true;
-		static inline bool bContainerHideWeapon3D = true;
-		static inline bool bBarterHideAlchemyItem3D = true;
-		static inline bool bBarterHideArmor3D = true;
-		static inline bool bBarterHideAmmo3D = true;
-		static inline bool bBarterHideBooksScrolls3D = true;
-		static inline bool bBarterHideMisc3D = true;
-		static inline bool bBarterHideWeapon3D = true;
+		static inline bool bContainerHideAlchemyItem3D = false;
+		static inline bool bContainerHideArmor3D = false;
+		static inline bool bContainerHideAmmo3D = false;
+		static inline bool bContainerHideBooksScrolls3D = false;
+		static inline bool bContainerHideMisc3D = false;
+		static inline bool bContainerHideWeapon3D = false;
+		static inline bool bBarterHideAlchemyItem3D = false;
+		static inline bool bBarterHideArmor3D = false;
+		static inline bool bBarterHideAmmo3D = false;
+		static inline bool bBarterHideBooksScrolls3D = false;
+		static inline bool bBarterHideMisc3D = false;
+		static inline bool bBarterHideWeapon3D = false;
 	};
 
 
