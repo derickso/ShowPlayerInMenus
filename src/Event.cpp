@@ -6,7 +6,6 @@
 constexpr auto MATH_PI = 3.14159265358979323846f;
 
 bool m_inMenu = false;
-bool m_inFreeCam = false;
 uint32_t m_camStateId;
 float m_playerRotation;
 float fTurnSensitivity = 0.2f;
@@ -257,18 +256,6 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 {
 	mcm.SetUnicode();
 	mcm.LoadFile(mcmSettingsPath);
-
-	auto camera = RE::PlayerCamera::GetSingleton();
-	if (camera) {
-		logger::info("camera->IsInFreeCameraMode(): {}"sv, camera->IsInFreeCameraMode());
-
-		auto& state = camera->currentState;
-		if (state) {
-			if ((state->id >= RE::CameraState::kAutoVanity) && (state->id <= RE::CameraState::kTween) && state->id != RE::CameraState::kFurniture) {
-				m_inFreeCam = true;
-			}
-		}
-	}
 
 	auto uiStr = RE::InterfaceStrings::GetSingleton();
 	if (uiStr) {
