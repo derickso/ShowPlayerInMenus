@@ -6,6 +6,7 @@
 constexpr auto MATH_PI = 3.14159265358979323846f;
 
 bool m_inMenu = false;
+bool m_inFreeCam = false;
 uint32_t m_camStateId;
 float m_playerRotation;
 float fTurnSensitivity = 0.2f;
@@ -19,7 +20,6 @@ constexpr auto mcmSettingsPath = L"Data/MCM/Settings/ShowPlayerInMenus.ini";
 CSimpleIniA mcm;
 
 // Input
-
 auto InputEventHandler::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEventSource<RE::InputEvent*>*)
 	-> EventResult
 {
@@ -104,15 +104,6 @@ void MenuOpenCloseEventHandler::RotateCamera()
 
 	if (m_camStateId < RE::CameraState::kThirdPerson) {
 		m_thirdForced = true;
-	} else if (player->IsInCombat()) {
-		ReadBoolSetting(mcm, "CombatSettings", "bEnableDuringCombat", bEnableInCombat);
-		if (!bEnableInCombat) {
-			m_inMenu = false;
-			return;
-		}
-	} else if (m_camStateId == RE::CameraState::kMount) {
-		m_inMenu = false;
-		return;
 	}
 
 	auto thirdState = (RE::ThirdPersonState*)camera->cameraStates[RE::CameraState::kThirdPerson].get();
@@ -147,7 +138,7 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	m_blurRadius = mod->blurRadius->floatValue;
 
 	camera->SetState(thirdState);
-	camera->UpdateThirdPerson(player->AsActorState()->IsWeaponDrawn());
+	//camera->UpdateThirdPerson(player->AsActorState()->IsWeaponDrawn());
 
 	// set over the shoulder camera values for when player has weapon drawn and unpaused menu(s) in order to prevent camera from snapping
 	fOverShoulderCombatPosX = ini->GetSetting("fOverShoulderCombatPosX:Camera");
@@ -163,6 +154,7 @@ void MenuOpenCloseEventHandler::RotateCamera()
 
 	// toggle anim cam which unshackles camera and lets it move in front of player with their weapon drawn, necessary if not using TDM
 	thirdState->toggleAnimCam = true;
+	//thirdState->freeRotationEnabled = true;
 
 	// Check latest settings
 	ReadFloatSetting(mcm, "PositionSettings", "fXOffset", fXOffset);
@@ -177,7 +169,13 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	fOverShoulderCombatPosX->data.f = fXOffset - 75.0f;
 	fOverShoulderCombatAddY->data.f = fYOffset - 50.0f;
 	fOverShoulderCombatPosZ->data.f = fZOffset - 50.0f;
-	thirdState->posOffsetExpected = thirdState->posOffsetActual = RE::NiPoint3(-fXOffset-75.0f, fYOffset-50.0f, fZOffset-50.0f);
+	// unpaused menus require an additional step when weapon is readied
+	if (player->AsActorState()->IsWeaponDrawn()) {
+		thirdState->posOffsetExpected = thirdState->posOffsetActual = RE::NiPoint3(-fXOffset - 75.0f, fYOffset - 50.0f, fZOffset - 50.0f);
+		fOverShoulderCombatPosX->data.f -= fXOffset + fXOffset;
+	} else {
+		thirdState->posOffsetExpected = thirdState->posOffsetActual = RE::NiPoint3(-fXOffset - 75.0f, fYOffset - 50.0f, fZOffset - 50.0f);
+	}
 
 	camera->Update();
 }
@@ -185,17 +183,6 @@ void MenuOpenCloseEventHandler::RotateCamera()
 void MenuOpenCloseEventHandler::ResetCamera()
 {
 	auto player = RE::PlayerCharacter::GetSingleton();
-	
-	if (player->IsInCombat()) {
-		ReadBoolSetting(mcm, "CombatSettings", "bEnableDuringCombat", bEnableInCombat);
-		if (!bEnableInCombat) {
-			m_inMenu = false;
-			return;
-		}
-	} else if (m_camStateId == RE::CameraState::kMount) {
-		m_inMenu = false;
-		return;
-	}
 	
 	auto camera = RE::PlayerCamera::GetSingleton();
 	auto thirdState = (RE::ThirdPersonState*)camera->cameraStates[RE::CameraState::kThirdPerson].get();
@@ -213,7 +200,7 @@ void MenuOpenCloseEventHandler::ResetCamera()
 	mod->radialBlur.strength = m_radialBlurStrength;
 	mod->blurRadius->floatValue = m_blurRadius;
 
-	if (m_thirdForced || m_camStateId == RE::CameraState::kMount) {
+	if (m_thirdForced) {
 		auto cameraState = (RE::TESCameraState*)camera->cameraStates[m_camStateId].get();
 		camera->SetState(cameraState);
 	}
@@ -225,6 +212,11 @@ void MenuOpenCloseEventHandler::OnInventoryOpen()
 {
 	auto camera = RE::PlayerCamera::GetSingleton();
 	if (!camera) {
+		return;
+	}
+
+	if (CheckOptions()) {
+		m_inMenu = false;
 		return;
 	}
 
@@ -244,6 +236,11 @@ void MenuOpenCloseEventHandler::OnInventoryOpen()
 
 void MenuOpenCloseEventHandler::OnInventoryClose()
 {
+	if (CheckOptions()) {
+		m_inMenu = false;
+		return;
+	}
+
 	// SmoothCam compatibility
 	if (g_SmoothCam && g_SmoothCam->IsCameraEnabled())
 	{
@@ -260,6 +257,18 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 {
 	mcm.SetUnicode();
 	mcm.LoadFile(mcmSettingsPath);
+
+	auto camera = RE::PlayerCamera::GetSingleton();
+	if (camera) {
+		logger::info("camera->IsInFreeCameraMode(): {}"sv, camera->IsInFreeCameraMode());
+
+		auto& state = camera->currentState;
+		if (state) {
+			if ((state->id >= RE::CameraState::kAutoVanity) && (state->id <= RE::CameraState::kTween) && state->id != RE::CameraState::kFurniture) {
+				m_inFreeCam = true;
+			}
+		}
+	}
 
 	auto uiStr = RE::InterfaceStrings::GetSingleton();
 	if (uiStr) {
@@ -350,6 +359,32 @@ void MenuOpenCloseEventHandler::ReadFloatSetting(CSimpleIniA& a_ini, const char*
 	if (bFound) {
 		a_setting = static_cast<float>(a_ini.GetDoubleValue(a_sectionName, a_settingName));
 	}
+}
+
+bool MenuOpenCloseEventHandler::CheckOptions()
+{
+	auto player = RE::PlayerCharacter::GetSingleton();
+	auto camera = RE::PlayerCamera::GetSingleton();
+
+	if (player->IsOnMount()) {
+		m_inMenu = false;
+		return true;
+	}
+
+	if (player->IsInCombat()) {
+		ReadBoolSetting(mcm, "CombatSettings", "bEnableDuringCombat", bEnableInCombat);
+		if (!bEnableInCombat) {
+			m_inMenu = false;
+			return true;
+		}
+	}
+
+	if (camera->IsInFreeCameraMode()) {
+		m_inMenu = false;
+		return true;
+	}
+
+	return false;
 }
 
 //constexpr uint32_t hash(const std::string_view data) noexcept {

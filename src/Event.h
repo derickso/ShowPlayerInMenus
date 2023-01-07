@@ -87,6 +87,7 @@ public:
 
 	static void ReadBoolSetting(CSimpleIniA& a_ini, const char* a_sectionName, const char* a_settingName, bool& a_setting);
 	static void ReadFloatSetting(CSimpleIniA& a_ini, const char* a_sectionName, const char* a_settingName, float& a_setting);
+	static bool CheckOptions();
 
 	static inline bool bEnableInInventoryMenu = true;
 	static inline bool bEnableInContainerMenu = false;
