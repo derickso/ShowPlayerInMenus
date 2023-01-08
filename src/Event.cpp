@@ -204,6 +204,7 @@ void MenuOpenCloseEventHandler::ResetCamera()
 		camera->SetState(cameraState);
 	}
 
+	thirdState->toggleAnimCam = false;
 	camera->Update();
 }
 
