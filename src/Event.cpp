@@ -169,12 +169,12 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	thirdState->targetZoomOffset = -0.1f;
 	thirdState->freeRotation.x = MATH_PI + fRotation - 0.5f;
 	thirdState->freeRotation.y = 0.0f;
+	player->data.angle.x = 0.0f;
 	fOverShoulderCombatPosX->data.f = fXOffset - 75.0f;
 	fOverShoulderCombatAddY->data.f = fYOffset - 50.0f;
 	fOverShoulderCombatPosZ->data.f = fZOffset - 50.0f;
-	// unpaused menus require additional steps when weapon is readied or in first person
-	if (player->AsActorState()->IsWeaponDrawn() || m_camStateId == RE::CameraState::kFirstPerson) {
-		player->data.angle.x = 0.0f;
+	// unpaused menus require additional steps when weapon is readied
+	if (player->AsActorState()->IsWeaponDrawn()) {
 		thirdState->posOffsetExpected = thirdState->posOffsetActual = RE::NiPoint3(-fXOffset - 75.0f, fYOffset - 50.0f, fZOffset - 50.0f);
 		fOverShoulderCombatPosX->data.f -= fXOffset + fXOffset;
 	} else {
