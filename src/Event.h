@@ -124,6 +124,7 @@ private:
 	float									m_fNewOverShoulderCombatPosX;
 	float									m_fNewOverShoulderCombatAddY;
 	float									m_fNewOverShoulderCombatPosZ;
+	float									m_fAutoVanityModeDelay;
 	RE::NiPoint2							m_freeRotation;
 	RE::NiPoint3							m_posOffsetExpected;
 	RE::NiPointer<RE::NiFloatInterpolator>	m_radialBlurStrength;

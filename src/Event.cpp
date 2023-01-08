@@ -15,6 +15,7 @@ RE::Setting* fOverShoulderCombatAddY;
 RE::Setting* fOverShoulderCombatPosZ;
 RE::Setting* fOverShoulderPosX;
 RE::Setting* fOverShoulderPosZ;
+RE::Setting* fAutoVanityModeDelay;
 
 //constexpr auto defaultSettingsPath = L"Data/MCM/Config/ShowPlayerInMenus/settings.ini";
 constexpr auto mcmSettingsPath = L"Data/MCM/Settings/ShowPlayerInMenus.ini";
@@ -151,11 +152,13 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	fOverShoulderCombatPosX = ini->GetSetting("fOverShoulderCombatPosX:Camera");
 	fOverShoulderCombatAddY = ini->GetSetting("fOverShoulderCombatAddY:Camera");
 	fOverShoulderCombatPosZ = ini->GetSetting("fOverShoulderCombatPosZ:Camera");
+	fAutoVanityModeDelay = ini->GetSetting("fAutoVanityModeDelay:Camera");
 	//fOverShoulderPosX = ini->GetSetting("fOverShoulderPosX:Camera");
 	//fOverShoulderPosZ = ini->GetSetting("fOverShoulderPosZ:Camera");
 	m_fOverShoulderCombatPosX = fOverShoulderCombatPosX->GetFloat();
 	m_fOverShoulderCombatAddY = fOverShoulderCombatAddY->GetFloat();
 	m_fOverShoulderCombatPosZ = fOverShoulderCombatPosZ->GetFloat();
+	m_fAutoVanityModeDelay = fAutoVanityModeDelay->GetFloat();
 
 
 	// disable blur before opening menu so character is not obscured
@@ -171,6 +174,8 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	ReadFloatSetting(mcm, "PositionSettings", "fYOffset", fYOffset);
 	ReadFloatSetting(mcm, "PositionSettings", "fZOffset", fZOffset);
 	ReadFloatSetting(mcm, "PositionSettings", "fRotation", fRotation);
+
+	fAutoVanityModeDelay->data.f = 10800.0f;	// 3 hours
 
 	m_fNewOverShoulderCombatPosX = -fXOffset - 75.0f;
 	m_fNewOverShoulderCombatAddY = fYOffset - 50.0f;
@@ -201,6 +206,7 @@ void MenuOpenCloseEventHandler::ResetCamera()
 	// restore original values
 	player->data.angle.x = m_playerAngleX;
 	player->data.angle.z = m_playerRotation;
+	fAutoVanityModeDelay->data.f = m_fAutoVanityModeDelay;
 	thirdState->toggleAnimCam = false;
 	thirdState->targetZoomOffset = m_targetZoomOffset;
 	thirdState->freeRotation = m_freeRotation;
