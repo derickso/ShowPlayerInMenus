@@ -86,6 +86,7 @@ auto InputEventHandler::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEven
 						auto thirdPersonState = static_cast<RE::ThirdPersonState*>(playerCamera->currentState.get());
 						thirdPersonState->freeRotation.x -= ((mouseEvent->mouseInputX > 0 ? -1 : 1) * fTurnSensitivity);
 						player->Update3DPosition(true);
+						player->DoReset3D(true);
 					}
 				}
 			}
