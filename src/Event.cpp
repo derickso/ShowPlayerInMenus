@@ -80,10 +80,13 @@ auto InputEventHandler::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEven
 					auto mouseEvent = reinterpret_cast<RE::MouseMoveEvent*>(event->AsIDEvent());
 					if (abs(mouseEvent->mouseInputX) < 5)
 						continue;
-					player->SetRotationZ(player->data.angle.z + ((mouseEvent->mouseInputX > 0 ? -1 : 1) * fTurnSensitivity));
-					auto thirdPersonState = static_cast<RE::ThirdPersonState*>(camera->currentState.get());
-					thirdPersonState->freeRotation.x -= ((mouseEvent->mouseInputX > 0 ? -1 : 1) * fTurnSensitivity);
-					player->Update3DPosition(true);
+					auto playerCamera = RE::PlayerCamera::GetSingleton();
+					if (playerCamera) {
+						player->SetRotationZ(player->data.angle.z + ((mouseEvent->mouseInputX > 0 ? -1 : 1) * fTurnSensitivity));
+						auto thirdPersonState = static_cast<RE::ThirdPersonState*>(playerCamera->currentState.get());
+						thirdPersonState->freeRotation.x -= ((mouseEvent->mouseInputX > 0 ? -1 : 1) * fTurnSensitivity);
+						player->Update3DPosition(true);
+					}
 				}
 			}
 			break;
@@ -130,6 +133,7 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	*/
 
 	// collect original values for later
+	m_playerAngleX = player->data.angle.x;
 	m_targetZoomOffset = thirdState->targetZoomOffset;
 	m_freeRotation = thirdState->freeRotation;
 	m_posOffsetExpected = thirdState->posOffsetExpected;
@@ -164,12 +168,13 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	// rotate and move camera
 	thirdState->targetZoomOffset = -0.1f;
 	thirdState->freeRotation.x = MATH_PI + fRotation - 0.5f;
-	thirdState->freeRotation.y = 0;
+	thirdState->freeRotation.y = 0.0f;
 	fOverShoulderCombatPosX->data.f = fXOffset - 75.0f;
 	fOverShoulderCombatAddY->data.f = fYOffset - 50.0f;
 	fOverShoulderCombatPosZ->data.f = fZOffset - 50.0f;
-	// unpaused menus require an additional step when weapon is readied
-	if (player->AsActorState()->IsWeaponDrawn()) {
+	// unpaused menus require additional steps when weapon is readied or in first person
+	if (player->AsActorState()->IsWeaponDrawn() || m_camStateId == RE::CameraState::kFirstPerson) {
+		player->data.angle.x = 0.0f;
 		thirdState->posOffsetExpected = thirdState->posOffsetActual = RE::NiPoint3(-fXOffset - 75.0f, fYOffset - 50.0f, fZOffset - 50.0f);
 		fOverShoulderCombatPosX->data.f -= fXOffset + fXOffset;
 	} else {
@@ -188,6 +193,7 @@ void MenuOpenCloseEventHandler::ResetCamera()
 	auto mod = RE::TESForm::LookupByID<RE::TESImageSpaceModifier>(0x000434BB);
 
 	// restore original values
+	player->data.angle.x = m_playerAngleX;
 	player->data.angle.z = m_playerRotation;
 	thirdState->toggleAnimCam = false;
 	thirdState->targetZoomOffset = m_targetZoomOffset;

@@ -113,6 +113,7 @@ private:
 
 	bool									m_thirdForced;
 	bool									m_bDoRadialBlur;
+	float									m_playerAngleX;
 	float									m_targetZoomOffset;
 	float									m_fOverShoulderCombatPosX;
 	float									m_fOverShoulderCombatAddY;
