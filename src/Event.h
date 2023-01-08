@@ -93,7 +93,8 @@ public:
 	static inline bool bEnableInContainerMenu = false;
 	static inline bool bEnableInBarterMenu = false;
 	static inline bool bEnableInMagicMenu = false;
-	static inline bool bEnableInCombat = false;
+	static inline bool bEnableCombat = false;
+	static inline bool bEnableAutoMoving = false;
 	static inline float fXOffset = 0.0;
 	static inline float fYOffset = 0.0;
 	static inline float fZOffset = 0.0;
@@ -115,9 +116,14 @@ private:
 	bool									m_bDoRadialBlur;
 	float									m_playerAngleX;
 	float									m_targetZoomOffset;
+	float									m_fOverShoulderPosX;
+	float									m_fOverShoulderPosZ;
 	float									m_fOverShoulderCombatPosX;
 	float									m_fOverShoulderCombatAddY;
 	float									m_fOverShoulderCombatPosZ;
+	float									m_fNewOverShoulderCombatPosX;
+	float									m_fNewOverShoulderCombatAddY;
+	float									m_fNewOverShoulderCombatPosZ;
 	RE::NiPoint2							m_freeRotation;
 	RE::NiPoint3							m_posOffsetExpected;
 	RE::NiPointer<RE::NiFloatInterpolator>	m_radialBlurStrength;

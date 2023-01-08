@@ -8,10 +8,13 @@ constexpr auto MATH_PI = 3.14159265358979323846f;
 bool m_inMenu = false;
 uint32_t m_camStateId;
 float m_playerRotation;
-float fTurnSensitivity = 0.2f;
+float fRotationAmount = 0.10f;
+float fTurnSensitivity = 3.0f;
 RE::Setting* fOverShoulderCombatPosX;
 RE::Setting* fOverShoulderCombatAddY;
 RE::Setting* fOverShoulderCombatPosZ;
+RE::Setting* fOverShoulderPosX;
+RE::Setting* fOverShoulderPosZ;
 
 //constexpr auto defaultSettingsPath = L"Data/MCM/Config/ShowPlayerInMenus/settings.ini";
 constexpr auto mcmSettingsPath = L"Data/MCM/Settings/ShowPlayerInMenus.ini";
@@ -78,15 +81,15 @@ auto InputEventHandler::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEven
 			{
 				if (allowRotation) {
 					auto mouseEvent = reinterpret_cast<RE::MouseMoveEvent*>(event->AsIDEvent());
-					if (abs(mouseEvent->mouseInputX) < 5)
+					if (abs(mouseEvent->mouseInputX) < fTurnSensitivity)
 						continue;
 					auto playerCamera = RE::PlayerCamera::GetSingleton();
 					if (playerCamera) {
-						player->SetRotationZ(player->data.angle.z + ((mouseEvent->mouseInputX > 0 ? -1 : 1) * fTurnSensitivity));
+						player->SetRotationZ(player->data.angle.z + ((mouseEvent->mouseInputX > 0 ? -1 : 1) * fRotationAmount));
 						auto thirdPersonState = static_cast<RE::ThirdPersonState*>(playerCamera->currentState.get());
-						thirdPersonState->freeRotation.x -= ((mouseEvent->mouseInputX > 0 ? -1 : 1) * fTurnSensitivity);
+						thirdPersonState->freeRotation.x -= ((mouseEvent->mouseInputX > 0 ? -1 : 1) * fRotationAmount);
 						player->Update3DPosition(true);
-						player->DoReset3D(true);
+						//player->DoReset3D(!player->AsActorState()->IsWeaponDrawn());
 					}
 				}
 			}
@@ -142,15 +145,18 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	m_blurRadius = mod->blurRadius->floatValue;
 
 	camera->SetState(thirdState);
-	//camera->UpdateThirdPerson(player->AsActorState()->IsWeaponDrawn());
+	camera->UpdateThirdPerson(player->AsActorState()->IsWeaponDrawn());
 
 	// set over the shoulder camera values for when player has weapon drawn and unpaused menu(s) in order to prevent camera from snapping
 	fOverShoulderCombatPosX = ini->GetSetting("fOverShoulderCombatPosX:Camera");
 	fOverShoulderCombatAddY = ini->GetSetting("fOverShoulderCombatAddY:Camera");
 	fOverShoulderCombatPosZ = ini->GetSetting("fOverShoulderCombatPosZ:Camera");
+	//fOverShoulderPosX = ini->GetSetting("fOverShoulderPosX:Camera");
+	//fOverShoulderPosZ = ini->GetSetting("fOverShoulderPosZ:Camera");
 	m_fOverShoulderCombatPosX = fOverShoulderCombatPosX->GetFloat();
 	m_fOverShoulderCombatAddY = fOverShoulderCombatAddY->GetFloat();
 	m_fOverShoulderCombatPosZ = fOverShoulderCombatPosZ->GetFloat();
+
 
 	// disable blur before opening menu so character is not obscured
 	mod->radialBlur.strength = 0;
@@ -166,21 +172,20 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	ReadFloatSetting(mcm, "PositionSettings", "fZOffset", fZOffset);
 	ReadFloatSetting(mcm, "PositionSettings", "fRotation", fRotation);
 
+	m_fNewOverShoulderCombatPosX = -fXOffset - 75.0f;
+	m_fNewOverShoulderCombatAddY = fYOffset - 50.0f;
+	m_fNewOverShoulderCombatPosZ = fZOffset - 50.0f;
+
 	// rotate and move camera
 	thirdState->targetZoomOffset = -0.1f;
 	thirdState->freeRotation.x = MATH_PI + fRotation - 0.5f;
 	thirdState->freeRotation.y = 0.0f;
 	player->data.angle.x = 0.0f;
-	fOverShoulderCombatPosX->data.f = fXOffset - 75.0f;
-	fOverShoulderCombatAddY->data.f = fYOffset - 50.0f;
-	fOverShoulderCombatPosZ->data.f = fZOffset - 50.0f;
-	// unpaused menus require additional steps when weapon is readied
-	if (player->AsActorState()->IsWeaponDrawn()) {
-		thirdState->posOffsetExpected = thirdState->posOffsetActual = RE::NiPoint3(-fXOffset - 75.0f, fYOffset - 50.0f, fZOffset - 50.0f);
-		fOverShoulderCombatPosX->data.f -= fXOffset + fXOffset;
-	} else {
-		thirdState->posOffsetExpected = thirdState->posOffsetActual = RE::NiPoint3(-fXOffset - 75.0f, fYOffset - 50.0f, fZOffset - 50.0f);
-	}
+	fOverShoulderCombatPosX->data.f = m_fNewOverShoulderCombatPosX;
+	fOverShoulderCombatAddY->data.f = m_fNewOverShoulderCombatAddY;
+	fOverShoulderCombatPosZ->data.f = m_fNewOverShoulderCombatPosZ;
+
+	thirdState->posOffsetExpected = thirdState->posOffsetActual = RE::NiPoint3(-fXOffset - 75.0f, fYOffset - 50.0f, fZOffset - 50.0f);
 
 	camera->Update();
 }
@@ -280,7 +285,8 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 				if (a_event->opening) {
 					auto player = RE::PlayerCharacter::GetSingleton();
 					m_playerRotation = player->data.angle.z;
-					ReadFloatSetting(mcm, "PositionSettings", "fSensitivity", fTurnSensitivity);
+					ReadFloatSetting(mcm, "PositionSettings", "fRotationAmount", fRotationAmount);
+					ReadFloatSetting(mcm, "PositionSettings", "fTurnSensitivity", fTurnSensitivity);
 					OnInventoryOpen();
 				} else
 					OnInventoryClose();
@@ -296,7 +302,8 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 				if (a_event->opening) {
 					auto player = RE::PlayerCharacter::GetSingleton();
 					m_playerRotation = player->data.angle.z;
-					ReadFloatSetting(mcm, "PositionSettings", "fSensitivity", fTurnSensitivity);
+					ReadFloatSetting(mcm, "PositionSettings", "fRotationAmount", fRotationAmount);
+					ReadFloatSetting(mcm, "PositionSettings", "fTurnSensitivity", fTurnSensitivity);
 					OnInventoryOpen();
 				} else
 					OnInventoryClose();
@@ -311,7 +318,8 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 				if (a_event->opening) {
 					auto player = RE::PlayerCharacter::GetSingleton();
 					m_playerRotation = player->data.angle.z;
-					ReadFloatSetting(mcm, "PositionSettings", "fSensitivity", fTurnSensitivity);
+					ReadFloatSetting(mcm, "PositionSettings", "fRotationAmount", fRotationAmount);
+					ReadFloatSetting(mcm, "PositionSettings", "fTurnSensitivity", fTurnSensitivity);
 					OnInventoryOpen();
 				} else
 					OnInventoryClose();
@@ -327,7 +335,8 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 				if (a_event->opening) {
 					auto player = RE::PlayerCharacter::GetSingleton();
 					m_playerRotation = player->data.angle.z;
-					ReadFloatSetting(mcm, "PositionSettings", "fSensitivity", fTurnSensitivity);
+					ReadFloatSetting(mcm, "PositionSettings", "fRotationAmount", fRotationAmount);
+					ReadFloatSetting(mcm, "PositionSettings", "fTurnSensitivity", fTurnSensitivity);
 					OnInventoryOpen();
 				} else
 					OnInventoryClose();
@@ -360,6 +369,7 @@ bool MenuOpenCloseEventHandler::CheckOptions()
 {
 	auto player = RE::PlayerCharacter::GetSingleton();
 	auto camera = RE::PlayerCamera::GetSingleton();
+	auto controls = RE::PlayerControls::GetSingleton();
 
 	if (player->IsOnMount()) {
 		m_inMenu = false;
@@ -367,8 +377,16 @@ bool MenuOpenCloseEventHandler::CheckOptions()
 	}
 
 	if (player->IsInCombat()) {
-		ReadBoolSetting(mcm, "CombatSettings", "bEnableDuringCombat", bEnableInCombat);
-		if (!bEnableInCombat) {
+		ReadBoolSetting(mcm, "ConditionalSettings", "bEnableDuringCombat", bEnableCombat);
+		if (!bEnableCombat) {
+			m_inMenu = false;
+			return true;
+		}
+	}
+
+	if (controls->data.autoMove) {
+		ReadBoolSetting(mcm, "ConditionalSettings", "bEnableWhileAutoMoving", bEnableAutoMoving);
+		if (!bEnableAutoMoving) {
 			m_inMenu = false;
 			return true;
 		}
