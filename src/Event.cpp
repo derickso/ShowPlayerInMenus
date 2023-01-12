@@ -196,9 +196,6 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	m_fNewOverShoulderCombatAddY = fYOffset - 50.0f;
 	m_fNewOverShoulderCombatPosZ = fZOffset - 50.0f;
 
-	logger::info("");
-	logger::info("m_thirdForced: {}"sv, m_thirdForced);
-
 	// rotate and move camera
 	thirdState->targetZoomOffset = -0.1f;
 	thirdState->freeRotation.x = MATH_PI + fRotation - 0.5f;
