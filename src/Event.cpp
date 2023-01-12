@@ -5,6 +5,7 @@
 
 constexpr auto MATH_PI = 3.14159265358979323846f;
 
+bool m_thirdForced = false;
 bool m_inMenu = false;
 uint32_t m_camStateId;
 float m_playerRotation;
@@ -125,10 +126,6 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	auto ini = RE::INISettingCollection::GetSingleton();
 	auto player = RE::PlayerCharacter::GetSingleton();
 
-	if (m_camStateId < RE::CameraState::kThirdPerson) {
-		m_thirdForced = true;
-	}
-
 	auto thirdState = (RE::ThirdPersonState*)camera->cameraStates[RE::CameraState::kThirdPerson].get();
 	auto mod = RE::TESForm::LookupByID<RE::TESImageSpaceModifier>(0x000434BB);	// Image Space Adapter - ISMTween
 
@@ -196,11 +193,14 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	fAutoVanityModeDelay->data.f = 10800.0f;	// 3 hours
 
 	m_fNewOverShoulderCombatPosX = -fXOffset - 75.0f;
-	m_fNewOverShoulderCombatAddY = fYOffset;
+	m_fNewOverShoulderCombatAddY = fYOffset - 50.0f;
 	m_fNewOverShoulderCombatPosZ = fZOffset - 50.0f;
 
+	logger::info("");
+	logger::info("m_thirdForced: {}"sv, m_thirdForced);
+
 	// rotate and move camera
-	//thirdState->targetZoomOffset = -0.1f;
+	thirdState->targetZoomOffset = -0.1f;
 	thirdState->freeRotation.x = MATH_PI + fRotation - 0.5f;
 
 	// account for camera freeRotation settings getting pushed into player's pitch (x) values when weapon drawn
@@ -250,6 +250,7 @@ void MenuOpenCloseEventHandler::ResetCamera()
 	}
 
 	thirdState->toggleAnimCam = false;
+	m_thirdForced = false;
 	camera->Update();
 }
 
@@ -275,7 +276,6 @@ void MenuOpenCloseEventHandler::OnInventoryOpen()
 		}
 	}
 
-	m_thirdForced = false;
 	RotateCamera();
 }
 
@@ -403,6 +403,14 @@ bool MenuOpenCloseEventHandler::CheckOptions()
 	auto player = RE::PlayerCharacter::GetSingleton();
 	auto camera = RE::PlayerCamera::GetSingleton();
 	auto controls = RE::PlayerControls::GetSingleton();
+
+	if (m_camStateId < RE::CameraState::kThirdPerson) {
+		ReadBoolSetting(mcm, "ConditionalSettings", "bEnableFirstPerson", bEnableFirstPerson);
+		if (!bEnableFirstPerson) {
+			return true;
+		}
+		m_thirdForced = true;
+	}
 
 	if (player->IsOnMount()) {
 		m_inMenu = false;
