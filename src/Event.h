@@ -98,6 +98,7 @@ public:
 	static inline float fXOffset = 0.0;
 	static inline float fYOffset = 0.0;
 	static inline float fZOffset = 0.0;
+	static inline float fPitch = 0.2;
 	static inline float fRotation = 0.0;
 
 	virtual EventResult ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override;

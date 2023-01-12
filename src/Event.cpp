@@ -50,9 +50,7 @@ auto InputEventHandler::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEven
 
 	for (auto event = *a_event; event; event = event->next) {
 		auto inputDevice = event->GetDevice();
-		if (inputDevice == RE::INPUT_DEVICE::kGamepad)
-			break;
-
+		
 		switch (event->GetEventType()) {
 		case RE::INPUT_EVENT_TYPE::kButton:
 			{
@@ -63,10 +61,28 @@ auto InputEventHandler::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEven
 				}
 
 				switch (inputDevice) {
-				case RE::INPUT_DEVICE::kKeyboard:
-					if (const auto key = static_cast<Key>(buttonEvent->GetIDCode()); key == 257) {
-						allowRotation = true;
-						continue;
+				case RE::INPUT_DEVICE::kGamepad:
+					{
+						const auto gamepadButton = static_cast<ControllerButton>(buttonEvent->GetIDCode());
+						if (gamepadButton == 9) {
+							auto playerCamera = RE::PlayerCamera::GetSingleton();
+							if (playerCamera) {
+								player->SetRotationZ(player->data.angle.z + (1 * fRotationAmount));
+								auto thirdPersonState = static_cast<RE::ThirdPersonState*>(playerCamera->currentState.get());
+								thirdPersonState->freeRotation.x -= (1 * fRotationAmount);
+								player->Update3DPosition(true);
+							}
+							continue;
+						} else if (gamepadButton == 10) {
+							auto playerCamera = RE::PlayerCamera::GetSingleton();
+							if (playerCamera) {
+								player->SetRotationZ(player->data.angle.z + (-1 * fRotationAmount));
+								auto thirdPersonState = static_cast<RE::ThirdPersonState*>(playerCamera->currentState.get());
+								thirdPersonState->freeRotation.x -= (-1 * fRotationAmount);
+								player->Update3DPosition(true);
+							}
+							continue;
+						}
 					}
 					break;
 				case RE::INPUT_DEVICE::kMouse:
@@ -153,13 +169,14 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	fOverShoulderCombatAddY = ini->GetSetting("fOverShoulderCombatAddY:Camera");
 	fOverShoulderCombatPosZ = ini->GetSetting("fOverShoulderCombatPosZ:Camera");
 	fAutoVanityModeDelay = ini->GetSetting("fAutoVanityModeDelay:Camera");
-	//fOverShoulderPosX = ini->GetSetting("fOverShoulderPosX:Camera");
-	//fOverShoulderPosZ = ini->GetSetting("fOverShoulderPosZ:Camera");
+	fOverShoulderPosX = ini->GetSetting("fOverShoulderPosX:Camera");
+	fOverShoulderPosZ = ini->GetSetting("fOverShoulderPosZ:Camera");
 	m_fOverShoulderCombatPosX = fOverShoulderCombatPosX->GetFloat();
 	m_fOverShoulderCombatAddY = fOverShoulderCombatAddY->GetFloat();
 	m_fOverShoulderCombatPosZ = fOverShoulderCombatPosZ->GetFloat();
+	m_fOverShoulderPosX = fOverShoulderPosX->GetFloat();
+	m_fOverShoulderPosZ = fOverShoulderPosZ->GetFloat();
 	m_fAutoVanityModeDelay = fAutoVanityModeDelay->GetFloat();
-
 
 	// disable blur before opening menu so character is not obscured
 	mod->radialBlur.strength = 0;
@@ -173,24 +190,32 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	ReadFloatSetting(mcm, "PositionSettings", "fXOffset", fXOffset);
 	ReadFloatSetting(mcm, "PositionSettings", "fYOffset", fYOffset);
 	ReadFloatSetting(mcm, "PositionSettings", "fZOffset", fZOffset);
+	ReadFloatSetting(mcm, "PositionSettings", "fPitch", fPitch);
 	ReadFloatSetting(mcm, "PositionSettings", "fRotation", fRotation);
 
 	fAutoVanityModeDelay->data.f = 10800.0f;	// 3 hours
 
 	m_fNewOverShoulderCombatPosX = -fXOffset - 75.0f;
-	m_fNewOverShoulderCombatAddY = fYOffset - 50.0f;
+	m_fNewOverShoulderCombatAddY = fYOffset;
 	m_fNewOverShoulderCombatPosZ = fZOffset - 50.0f;
 
 	// rotate and move camera
-	thirdState->targetZoomOffset = -0.1f;
+	//thirdState->targetZoomOffset = -0.1f;
 	thirdState->freeRotation.x = MATH_PI + fRotation - 0.5f;
-	thirdState->freeRotation.y = 0.0f;
-	player->data.angle.x = 0.0f;
-	fOverShoulderCombatPosX->data.f = m_fNewOverShoulderCombatPosX;
-	fOverShoulderCombatAddY->data.f = m_fNewOverShoulderCombatAddY;
-	fOverShoulderCombatPosZ->data.f = m_fNewOverShoulderCombatPosZ;
 
-	thirdState->posOffsetExpected = thirdState->posOffsetActual = RE::NiPoint3(-fXOffset - 75.0f, fYOffset - 50.0f, fZOffset - 50.0f);
+	// account for camera freeRotation settings getting pushed into player's pitch (x) values when weapon drawn
+	thirdState->freeRotation.y = 0.0f;
+	if (!player->AsActorState()->IsWeaponDrawn())
+		player->data.angle.x = 0.2f + fPitch;
+	else {
+		player->data.angle.x -= player->data.angle.x - fPitch - 0.2f;
+	}
+
+	fOverShoulderCombatPosX->data.f = fOverShoulderPosX->data.f = m_fNewOverShoulderCombatPosX;
+	fOverShoulderCombatAddY->data.f = m_fNewOverShoulderCombatAddY;
+	fOverShoulderCombatPosZ->data.f = fOverShoulderPosZ->data.f = m_fNewOverShoulderCombatPosZ;
+
+	thirdState->posOffsetExpected = thirdState->posOffsetActual = RE::NiPoint3(m_fNewOverShoulderCombatPosX, m_fNewOverShoulderCombatAddY, m_fNewOverShoulderCombatPosZ);
 
 	camera->Update();
 }
@@ -214,6 +239,8 @@ void MenuOpenCloseEventHandler::ResetCamera()
 	fOverShoulderCombatPosX->data.f = m_fOverShoulderCombatPosX;
 	fOverShoulderCombatAddY->data.f = m_fOverShoulderCombatAddY;
 	fOverShoulderCombatPosZ->data.f = m_fOverShoulderCombatPosZ;
+	fOverShoulderPosX->data.f = m_fOverShoulderPosX;
+	fOverShoulderPosZ->data.f = m_fOverShoulderPosZ;
 	mod->radialBlur.strength = m_radialBlurStrength;
 	mod->blurRadius->floatValue = m_blurRadius;
 
