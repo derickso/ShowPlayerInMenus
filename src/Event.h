@@ -94,6 +94,7 @@ public:
 	static inline bool bEnableInBarterMenu = false;
 	static inline bool bEnableInMagicMenu = false;
 	static inline bool bEnableCombat = false;
+	static inline bool bEnableFirstPerson = true;
 	static inline bool bEnableAutoMoving = false;
 	static inline float fXOffset = 0.0;
 	static inline float fYOffset = 0.0;
@@ -113,7 +114,6 @@ private:
 	MenuOpenCloseEventHandler& operator=(const MenuOpenCloseEventHandler&) = delete;
 	MenuOpenCloseEventHandler& operator=(MenuOpenCloseEventHandler&&) = delete;
 
-	bool									m_thirdForced;
 	bool									m_bDoRadialBlur;
 	float									m_playerAngleX;
 	float									m_targetZoomOffset;
