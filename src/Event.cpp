@@ -17,7 +17,6 @@ RE::Setting* fOverShoulderCombatPosZ;
 RE::Setting* fOverShoulderPosX;
 RE::Setting* fOverShoulderPosZ;
 RE::Setting* fAutoVanityModeDelay;
-
 //constexpr auto defaultSettingsPath = L"Data/MCM/Config/ShowPlayerInMenus/settings.ini";
 constexpr auto mcmSettingsPath = L"Data/MCM/Settings/ShowPlayerInMenus.ini";
 
@@ -65,18 +64,16 @@ auto InputEventHandler::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEven
 				case RE::INPUT_DEVICE::kGamepad:
 					{
 						const auto gamepadButton = static_cast<ControllerButton>(buttonEvent->GetIDCode());
-						if (gamepadButton == 9) {
-							auto playerCamera = RE::PlayerCamera::GetSingleton();
-							if (playerCamera) {
+						if (gamepadButton == MenuOpenCloseEventHandler::iGamepadLeftTurnButton) {
+							if (const auto playerCamera = RE::PlayerCamera::GetSingleton()) {
 								player->SetRotationZ(player->data.angle.z + (1 * fRotationAmount));
 								auto thirdPersonState = static_cast<RE::ThirdPersonState*>(playerCamera->currentState.get());
 								thirdPersonState->freeRotation.x -= (1 * fRotationAmount);
 								player->Update3DPosition(true);
 							}
 							continue;
-						} else if (gamepadButton == 10) {
-							auto playerCamera = RE::PlayerCamera::GetSingleton();
-							if (playerCamera) {
+						} else if (gamepadButton == MenuOpenCloseEventHandler::iGamepadRightTurnButton) {
+							if (const auto playerCamera = RE::PlayerCamera::GetSingleton()) {
 								player->SetRotationZ(player->data.angle.z + (-1 * fRotationAmount));
 								auto thirdPersonState = static_cast<RE::ThirdPersonState*>(playerCamera->currentState.get());
 								thirdPersonState->freeRotation.x -= (-1 * fRotationAmount);
@@ -183,6 +180,10 @@ void MenuOpenCloseEventHandler::RotateCamera()
 	thirdState->toggleAnimCam = true;
 	//thirdState->freeRotationEnabled = true;
 
+	// set gamepad control maps;
+	ReadUint32Setting(mcm, "GamepadSettings", "iGamepadLeftTurnButton", iGamepadLeftTurnButton);
+	ReadUint32Setting(mcm, "GamepadSettings", "iGamepadRightTurnButton", iGamepadRightTurnButton);
+
 	// Check latest settings
 	ReadFloatSetting(mcm, "PositionSettings", "fXOffset", fXOffset);
 	ReadFloatSetting(mcm, "PositionSettings", "fYOffset", fYOffset);
@@ -264,12 +265,12 @@ void MenuOpenCloseEventHandler::OnInventoryOpen()
 	}
 
 	// SmoothCam compatibility
-	if (g_SmoothCam && g_SmoothCam->IsCameraEnabled())
+	if (g_smooth_cam && g_smooth_cam->IsCameraEnabled())
 	{
-		const auto result = g_SmoothCam->RequestCameraControl(g_pluginHandle);
+		const auto result = g_smooth_cam->RequestCameraControl(g_plugin_handle);
 		if (result == SmoothCamAPI::APIResult::OK || result == SmoothCamAPI::APIResult::AlreadyGiven)
 		{
-			g_SmoothCam->RequestInterpolatorUpdates(g_pluginHandle, true);
+			g_smooth_cam->RequestInterpolatorUpdates(g_plugin_handle, true);
 		}
 	}
 
@@ -284,10 +285,10 @@ void MenuOpenCloseEventHandler::OnInventoryClose()
 	}
 
 	// SmoothCam compatibility
-	if (g_SmoothCam && g_SmoothCam->IsCameraEnabled())
+	if (g_smooth_cam && g_smooth_cam->IsCameraEnabled())
 	{
 		//g_SmoothCam->RequestInterpolatorUpdates(g_pluginHandle, false);
-		g_SmoothCam->ReleaseCameraControl(g_pluginHandle);
+		g_smooth_cam->ReleaseCameraControl(g_plugin_handle);
 	}
 
 	ResetCamera();
@@ -306,7 +307,7 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 
 		if (name == uiStr->inventoryMenu)
 		{
-			g_uiName = name;
+			g_ui_name = name;
 			ReadBoolSetting(mcm, "GeneralSettings", "bEnableInInventoryMenu", bEnableInInventoryMenu);
 
 			if (bEnableInInventoryMenu) {
@@ -323,7 +324,7 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 			}
 		} else if (name == uiStr->containerMenu)
 		{
-			g_uiName = name;
+			g_ui_name = name;
 			ReadBoolSetting(mcm, "GeneralSettings", "bEnableInContainerMenu", bEnableInContainerMenu);
 
 			if (bEnableInContainerMenu) {
@@ -339,7 +340,7 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 					OnInventoryClose();
 			}
 		} else if (name == uiStr->barterMenu) {
-			g_uiName = name;
+			g_ui_name = name;
 			ReadBoolSetting(mcm, "GeneralSettings", "bEnableInBarterMenu", bEnableInBarterMenu);
 
 			if (bEnableInBarterMenu) {
@@ -356,7 +357,7 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 			}
 		} else if (name == uiStr->magicMenu)
 		{
-			g_uiName = name;
+			g_ui_name = name;
 			ReadBoolSetting(mcm, "GeneralSettings", "bEnableInMagicMenu", bEnableInMagicMenu);
 
 			if (bEnableInMagicMenu) {
@@ -392,6 +393,15 @@ void MenuOpenCloseEventHandler::ReadFloatSetting(CSimpleIniA& a_ini, const char*
 	bFound = a_ini.GetValue(a_sectionName, a_settingName);
 	if (bFound) {
 		a_setting = static_cast<float>(a_ini.GetDoubleValue(a_sectionName, a_settingName));
+	}
+}
+
+void MenuOpenCloseEventHandler::ReadUint32Setting(CSimpleIniA& a_ini, const char* a_sectionName, const char* a_settingName, uint32_t& a_setting)
+{
+	const char* bFound = nullptr;
+	bFound = a_ini.GetValue(a_sectionName, a_settingName);
+	if (bFound) {
+		a_setting = a_ini.GetLongValue(a_sectionName, a_settingName);
 	}
 }
 

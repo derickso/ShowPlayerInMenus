@@ -13,10 +13,10 @@ namespace ShowPlayerInMenusNamespace
 		switch (msg->type) {
 			case SKSE::MessagingInterface::kPostLoad:
 				if (!SmoothCamAPI::RegisterInterfaceLoaderCallback(
-					g_Messaging,
+					g_messaging,
 					[](void* interfaceInstance, SmoothCamAPI::InterfaceVersion interfaceVersion) {
 						if (interfaceVersion == SmoothCamAPI::InterfaceVersion::V2) {
-							g_SmoothCam = reinterpret_cast<SmoothCamAPI::IVSmoothCam2*>(interfaceInstance);
+							g_smooth_cam = reinterpret_cast<SmoothCamAPI::IVSmoothCam2*>(interfaceInstance);
 							_MESSAGE("Obtained SmoothCamAPI");
 						}
 						else
@@ -26,7 +26,7 @@ namespace ShowPlayerInMenusNamespace
 				break;
 			case SKSE::MessagingInterface::kPostPostLoad:
 				if (!SmoothCamAPI::RequestInterface(
-					g_Messaging,
+					g_messaging,
 					SmoothCamAPI::InterfaceVersion::V2
 				)) _MESSAGE("SmoothCamAPI::RequestInterface reported an error");
 				break;

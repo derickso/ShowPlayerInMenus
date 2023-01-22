@@ -5,10 +5,10 @@
 #include <Simpleini.h>
 #include <RE/N/NiFloatInterpolator.h>
 
-RE::BSFixedString g_uiName;
-SmoothCamAPI::IVSmoothCam2* g_SmoothCam = nullptr;
-SKSE::MessagingInterface* g_Messaging = nullptr;
-SKSE::PluginHandle g_pluginHandle = SKSE::kInvalidPluginHandle;
+static RE::BSFixedString g_ui_name;
+static SmoothCamAPI::IVSmoothCam2* g_smooth_cam = nullptr;
+static SKSE::MessagingInterface* g_messaging = nullptr;
+static SKSE::PluginHandle g_plugin_handle = SKSE::kInvalidPluginHandle;
 
 class InputEventHandler : public RE::BSTEventSink<RE::InputEvent*>
 {
@@ -87,6 +87,7 @@ public:
 
 	static void ReadBoolSetting(CSimpleIniA& a_ini, const char* a_sectionName, const char* a_settingName, bool& a_setting);
 	static void ReadFloatSetting(CSimpleIniA& a_ini, const char* a_sectionName, const char* a_settingName, float& a_setting);
+	static void ReadUint32Setting(CSimpleIniA& a_ini, const char* a_sectionName, const char* a_settingName, uint32_t& a_setting);
 	static bool CheckOptions();
 
 	static inline bool bEnableInInventoryMenu = true;
@@ -96,11 +97,13 @@ public:
 	static inline bool bEnableCombat = false;
 	static inline bool bEnableFirstPerson = true;
 	static inline bool bEnableAutoMoving = false;
-	static inline float fXOffset = 0.0;
-	static inline float fYOffset = 0.0;
-	static inline float fZOffset = 0.0;
-	static inline float fPitch = 0.2;
-	static inline float fRotation = 0.0;
+	static inline float fXOffset = 0.0f;
+	static inline float fYOffset = 0.0f;
+	static inline float fZOffset = 0.0f;
+	static inline float fPitch = 0.2f;
+	static inline float fRotation = 0.0f;
+	static inline std::uint32_t iGamepadLeftTurnButton = ControllerButton::kLeftShoulder;
+	static inline std::uint32_t iGamepadRightTurnButton = ControllerButton::kRightShoulder;
 
 	virtual EventResult ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override;
 
