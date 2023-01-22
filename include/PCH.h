@@ -40,6 +40,11 @@
 
 using namespace std::literals;
 
+using Key = RE::BSWin32KeyboardDevice::Key;
+using MouseButton = RE::BSWin32MouseDevice::Key;
+using ControllerButton = RE::BSWin32GamepadDevice::Key;
+
+
 namespace stl
 {
 	using namespace SKSE::stl;
@@ -77,6 +82,9 @@ namespace util
 }
 
 #define DLLEXPORT __declspec(dllexport)
+
+#define RELOCATION_OFFSET(SE, AE) REL::VariantOffset(SE, AE, 0).offset()
+#define RELOCATION_OFFSET2(SE, AE, AE629) REL::VariantOffset(SE, REL::Module::get().version().compare(SKSE::RUNTIME_SSE_1_6_629) == std::strong_ordering::less ? AE : AE629, 0).offset()
 
 #include "Plugin.h"
 
