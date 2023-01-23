@@ -47,7 +47,7 @@ namespace ShowPlayerInMenus
 			mcm.SetUnicode();
 			mcm.LoadFile(mcmSettingsPath);
 
-			if (RE::BSFixedString("InventoryMenu") == g_ui_name)
+			if (RE::BSFixedString("InventoryMenu") == g_uiName)
 			{
 				switch (obj->GetFormType())
 				{
@@ -105,7 +105,7 @@ namespace ShowPlayerInMenus
 						manager->UpdateMagic3D(obj, 0);
 						break;
 				}
-			} else if (RE::BSFixedString("ContainerMenu") == g_ui_name)
+			} else if (RE::BSFixedString("ContainerMenu") == g_uiName)
 			{
 				switch (obj->GetFormType()) {
 				case RE::FormType::AlchemyItem:
@@ -162,7 +162,7 @@ namespace ShowPlayerInMenus
 						manager->UpdateMagic3D(obj, 0);
 						break;
 				}
-			} else if (RE::BSFixedString("BarterMenu") == g_ui_name) {
+			} else if (RE::BSFixedString("BarterMenu") == g_uiName) {
 				switch (obj->GetFormType()) {
 				case RE::FormType::AlchemyItem:
 						ReadBoolSetting(mcm, "BarterMenuSettings", "bHideAlchemyItem3D", bBarterHideAlchemyItem3D);

@@ -265,12 +265,12 @@ void MenuOpenCloseEventHandler::OnInventoryOpen()
 	}
 
 	// SmoothCam compatibility
-	if (g_smooth_cam && g_smooth_cam->IsCameraEnabled())
+	if (g_SmoothCam && g_SmoothCam->IsCameraEnabled())
 	{
-		const auto result = g_smooth_cam->RequestCameraControl(g_plugin_handle);
+		const auto result = g_SmoothCam->RequestCameraControl(g_pluginHandle);
 		if (result == SmoothCamAPI::APIResult::OK || result == SmoothCamAPI::APIResult::AlreadyGiven)
 		{
-			g_smooth_cam->RequestInterpolatorUpdates(g_plugin_handle, true);
+			g_SmoothCam->RequestInterpolatorUpdates(g_pluginHandle, true);
 		}
 	}
 
@@ -285,10 +285,10 @@ void MenuOpenCloseEventHandler::OnInventoryClose()
 	}
 
 	// SmoothCam compatibility
-	if (g_smooth_cam && g_smooth_cam->IsCameraEnabled())
+	if (g_SmoothCam && g_SmoothCam->IsCameraEnabled())
 	{
 		//g_SmoothCam->RequestInterpolatorUpdates(g_pluginHandle, false);
-		g_smooth_cam->ReleaseCameraControl(g_plugin_handle);
+		g_SmoothCam->ReleaseCameraControl(g_pluginHandle);
 	}
 
 	ResetCamera();
@@ -307,7 +307,7 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 
 		if (name == uiStr->inventoryMenu)
 		{
-			g_ui_name = name;
+			g_uiName = name;
 			ReadBoolSetting(mcm, "GeneralSettings", "bEnableInInventoryMenu", bEnableInInventoryMenu);
 
 			if (bEnableInInventoryMenu) {
@@ -324,7 +324,7 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 			}
 		} else if (name == uiStr->containerMenu)
 		{
-			g_ui_name = name;
+			g_uiName = name;
 			ReadBoolSetting(mcm, "GeneralSettings", "bEnableInContainerMenu", bEnableInContainerMenu);
 
 			if (bEnableInContainerMenu) {
@@ -340,7 +340,7 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 					OnInventoryClose();
 			}
 		} else if (name == uiStr->barterMenu) {
-			g_ui_name = name;
+			g_uiName = name;
 			ReadBoolSetting(mcm, "GeneralSettings", "bEnableInBarterMenu", bEnableInBarterMenu);
 
 			if (bEnableInBarterMenu) {
@@ -357,7 +357,7 @@ auto MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 			}
 		} else if (name == uiStr->magicMenu)
 		{
-			g_ui_name = name;
+			g_uiName = name;
 			ReadBoolSetting(mcm, "GeneralSettings", "bEnableInMagicMenu", bEnableInMagicMenu);
 
 			if (bEnableInMagicMenu) {

@@ -5,10 +5,10 @@
 #include <Simpleini.h>
 #include <RE/N/NiFloatInterpolator.h>
 
-static RE::BSFixedString g_ui_name;
-static SmoothCamAPI::IVSmoothCam2* g_smooth_cam = nullptr;
-static SKSE::MessagingInterface* g_messaging = nullptr;
-static SKSE::PluginHandle g_plugin_handle = SKSE::kInvalidPluginHandle;
+static RE::BSFixedString g_uiName;
+static SmoothCamAPI::IVSmoothCam2* g_SmoothCam = nullptr;
+static SKSE::MessagingInterface* g_Messaging = nullptr;
+static SKSE::PluginHandle g_pluginHandle = SKSE::kInvalidPluginHandle;
 
 class InputEventHandler : public RE::BSTEventSink<RE::InputEvent*>
 {

@@ -54,8 +54,8 @@ EXTERN_C [[maybe_unused]] __declspec(dllexport) bool SKSEAPI SKSEPlugin_Load(con
 
 	Init();
 
-	g_plugin_handle = a_skse->GetPluginHandle();
-	g_messaging = reinterpret_cast<SKSE::MessagingInterface*>(a_skse->QueryInterface(a_skse->kMessaging));
+	g_pluginHandle = a_skse->GetPluginHandle();
+	g_Messaging = reinterpret_cast<SKSE::MessagingInterface*>(a_skse->QueryInterface(a_skse->kMessaging));
 	
 	ShowPlayerInMenus::ShowPlayerInMenusHook::InstallHook();
 
