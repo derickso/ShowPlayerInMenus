@@ -31,10 +31,12 @@ namespace ShowPlayerInMenusNamespace
 				)) _MESSAGE("SmoothCamAPI::RequestInterface reported an error");
 				break;
 			case SKSE::MessagingInterface::kInputLoaded:
-				_MESSAGE("Input Load CallBack Trigger!");
-
+				_MESSAGE("Input Load CallBack Trigger Begin!");
 				InputEventHandler::Enable();
+				MenuOpenCloseEventHandler::ReadDefaultMCMSettings();
+				_MESSAGE("Read Default MCM Settings Success!");
 				MenuOpenCloseEventHandler::Enable();
+				_MESSAGE("Input Load CallBack Trigger Success!");
 				break;
 			default:
 				break;

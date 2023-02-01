@@ -51,6 +51,7 @@ EXTERN_C [[maybe_unused]] __declspec(dllexport) bool SKSEAPI SKSEPlugin_Load(con
 	logger::info("ShowPlayerInMenus loaded"sv);
 
 	SKSE::Init(a_skse);
+	SKSE::AllocTrampoline(1 << 9);
 
 	Init();
 
@@ -58,6 +59,9 @@ EXTERN_C [[maybe_unused]] __declspec(dllexport) bool SKSEAPI SKSEPlugin_Load(con
 	g_Messaging = reinterpret_cast<SKSE::MessagingInterface*>(a_skse->QueryInterface(a_skse->kMessaging));
 	
 	ShowPlayerInMenus::ShowPlayerInMenusHook::InstallHook();
+	ShowPlayerInMenus::FirstPersonStateHook::InstallHook();
+	//ShowPlayerInMenus::ThirdPersonStateHook::InstallHook();
+	//ShowPlayerInMenus::Actor_SetRotationHook::InstallHook();
 
 	return true;
 }
