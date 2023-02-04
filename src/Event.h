@@ -105,6 +105,7 @@ public:
 	static inline bool bEnableCombat = false;
 	static inline bool bEnableFirstPerson = true;
 	static inline bool bEnableMoving = true;
+	static inline bool bEnableSitting = false;
 	static inline bool bEnableAutoMoving = false;
 	static inline bool bAltCamSwitchTarget = false;
 	static inline float fXOffset = 0.0f;
@@ -112,6 +113,7 @@ public:
 	static inline float fZOffset = 0.0f;
 	static inline float fPitch = 0.2f;
 	static inline float fRotation = 0.0f;
+	static inline bool bGamepadRotating = true;
 	static inline uint32_t iGamepadTurnMethod = 0;
 
 	virtual EventResult ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override;

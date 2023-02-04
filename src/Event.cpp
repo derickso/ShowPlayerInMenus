@@ -14,6 +14,7 @@ bool m_rotatedInTweenMenu = false;
 bool m_shouldDisableAnimCam = false;
 bool m_fixCameraZoom = false;
 bool m_rotatedPlayer = false;
+bool m_inSitState = false;
 uint32_t m_camStateId;
 float m_playerRotation;
 RE::NiPoint2 g_freeRotation;
@@ -168,7 +169,7 @@ auto InputEventHandler::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEven
 				switch (inputDevice) {
 				case RE::INPUT_DEVICE::kGamepad:
 					{
-						if (MenuOpenCloseEventHandler::iGamepadTurnMethod == 1) {
+						if (MenuOpenCloseEventHandler::iGamepadTurnMethod == 1 && MenuOpenCloseEventHandler::bGamepadRotating) {
 							const auto gamepadButton = static_cast<ControllerButton>(buttonEvent->GetIDCode());
 
 							if (gamepadButton == 9) {
@@ -263,8 +264,11 @@ auto InputEventHandler::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEven
 				}
 				// don't rotate if item preview is maximized
 				RE::Inventory3DManager* inventory3DManager = RE::Inventory3DManager::GetSingleton();
+				//RE::UserEvents* userEvents = RE::UserEvents::GetSingleton();
+				//RE::IDEvent* idEvent = static_cast<RE::ButtonEvent*>(event);
+				//idEvent->userEvent == userEvents->rotate
 				if (inventory3DManager->GetRuntimeData().zoomProgress == 0.0f) {
-					if (MenuOpenCloseEventHandler::iGamepadTurnMethod == 0) {
+					if (MenuOpenCloseEventHandler::iGamepadTurnMethod == 0 && MenuOpenCloseEventHandler::bGamepadRotating) {
 						auto stickEvent = reinterpret_cast<RE::ThumbstickEvent*>(event->AsIDEvent());
 						auto playerCamera = RE::PlayerCamera::GetSingleton();
 
@@ -571,6 +575,12 @@ void MenuOpenCloseEventHandler::ResetCamera()
 	auto thirdState = (RE::ThirdPersonState*)camera->cameraStates[RE::CameraState::kThirdPerson].get();
 	auto mod = RE::TESForm::LookupByID<RE::TESImageSpaceModifier>(0x000434BB);
 
+	if (m_thirdForced) {
+		//to cameraState = (RE::TESCameraState*)camera->cameraStates[m_camStateId].get();
+		const auto firstPersonState = static_cast<RE::FirstPersonState*>(camera->cameraStates[RE::CameraState::kFirstPerson].get());
+		camera->SetState(firstPersonState);
+	}
+
 	// restore original values
 	player->data.angle.x = m_playerAngleX;
 	player->data.angle.z = m_playerRotation;
@@ -591,12 +601,6 @@ void MenuOpenCloseEventHandler::ResetCamera()
 	mod->blurRadius->floatValue = m_blurRadius;
 	player->SetGraphVariableBool("IsNPC", m_playerHeadtrackingEnabled);
 
-	if (m_thirdForced) {
-		//to cameraState = (RE::TESCameraState*)camera->cameraStates[m_camStateId].get();
-		const auto firstPersonState = static_cast<RE::FirstPersonState*>(camera->cameraStates[RE::CameraState::kFirstPerson].get());
-		camera->SetState(firstPersonState);
-	}
-
 	m_thirdForced = false;
 
 	camera->Update();
@@ -605,6 +609,7 @@ void MenuOpenCloseEventHandler::ResetCamera()
 	fMouseWheelZoomSpeed->data.f = m_fMouseWheelZoomSpeed;
 
 	m_rotatedPlayer = false;
+	m_inSitState = false;
 }
 
 void MenuOpenCloseEventHandler::OnInventoryOpen()
@@ -624,6 +629,7 @@ void MenuOpenCloseEventHandler::OnInventoryOpen()
 	m_playerRotation = player->data.angle.z;
 	ReadFloatSetting(mcmOverride, "PositionSettings", "fRotationAmount", fRotationAmount);
 	ReadFloatSetting(mcmOverride, "PositionSettings", "fTurnSensitivity", fTurnSensitivity);
+	ReadBoolSetting(mcmOverride, "GamepadSettings", "bEnableRotating", bGamepadRotating);
 	ReadUint32Setting(mcmOverride, "GamepadSettings", "iGamepadTurnMethod", iGamepadTurnMethod);
 
 	// SmoothCam compatibility
@@ -639,9 +645,9 @@ void MenuOpenCloseEventHandler::OnInventoryOpen()
 	ReadBoolSetting(mcmOverride, "ModeSettings", "bRotateCamera", bRotateCamera);
 	ReadBoolSetting(mcmOverride, "ModeSettings", "bRotatePlayer", bRotatePlayer);
 	m_fixCameraZoom = true;
-	if (bRotatePlayer) {
+	if (bRotatePlayer && !m_inSitState) {
 		RotatePlayer();
-	} else if (bRotateCamera) {
+	} else {
 		RotateCamera();
 	}
 }
@@ -769,6 +775,20 @@ bool MenuOpenCloseEventHandler::CheckOptions()
 	auto player = RE::PlayerCharacter::GetSingleton();
 	auto camera = RE::PlayerCamera::GetSingleton();
 
+	auto sitSleepState = player->AsActorState()->GetSitSleepState();
+
+	// check if sitting
+	if (sitSleepState >= RE::SIT_SLEEP_STATE::kWantToSit &&
+		sitSleepState <= RE::SIT_SLEEP_STATE::kWantToStand) {
+		m_inSitState = true;
+		ReadBoolSetting(mcmOverride, "ConditionalSettings", "bEnableWhileSitting", bEnableSitting);
+		if (!bEnableSitting) {
+			m_inMenu = false;
+			return true;
+		}
+	}
+
+	// disable while in first person
 	if (m_camStateId == RE::CameraState::kFirstPerson || m_thirdForced) {
 		ReadBoolSetting(mcmOverride, "ConditionalSettings", "bEnableFirstPerson", bEnableFirstPerson);
 		if (!bEnableFirstPerson) {
@@ -778,11 +798,19 @@ bool MenuOpenCloseEventHandler::CheckOptions()
 		m_thirdForced = true;
 	}
 
+	// disable while sleeping
+	if (sitSleepState >= RE::SIT_SLEEP_STATE::kWantToSleep) {
+		m_inMenu = false;
+		return true;
+	}
+	
+	// disable on mount
 	if (player->IsOnMount()) {
 		m_inMenu = false;
 		return true;
 	}
 
+	// disable in combat
 	if (player->IsInCombat()) {
 		ReadBoolSetting(mcmOverride, "ConditionalSettings", "bEnableDuringCombat", bEnableCombat);
 		if (!bEnableCombat) {
@@ -791,6 +819,7 @@ bool MenuOpenCloseEventHandler::CheckOptions()
 		}
 	}
 
+	// disable while moving
 	bool bMoving = player->AsActorState()->actorState1.movingBack ||
 				   player->AsActorState()->actorState1.movingForward ||
 				   player->AsActorState()->actorState1.movingRight ||
@@ -804,6 +833,7 @@ bool MenuOpenCloseEventHandler::CheckOptions()
 		}
 	}
 
+	// disable while auto moving
 	auto controls = RE::PlayerControls::GetSingleton();
 	if (controls->data.autoMove) {
 		ReadBoolSetting(mcmOverride, "ConditionalSettings", "bEnableWhileAutoMoving", bEnableAutoMoving);
@@ -813,6 +843,7 @@ bool MenuOpenCloseEventHandler::CheckOptions()
 		}
 	}
 
+	// disable in free camera mode (TFC)
 	if (camera->IsInFreeCameraMode()) {
 		m_inMenu = false;
 		return true;
@@ -837,6 +868,7 @@ void MenuOpenCloseEventHandler::ReadDefaultMCMSettings()
 
 	ReadBoolSetting(mcmDefault, "ConditionalSettings", "bEnableFirstPerson", bEnableFirstPerson);
 	ReadBoolSetting(mcmDefault, "ConditionalSettings", "bEnableWhileMoving", bEnableMoving);
+	ReadBoolSetting(mcmDefault, "ConditionalSettings", "bEnableWhileSitting", bEnableSitting);
 	ReadBoolSetting(mcmDefault, "ConditionalSettings", "bEnableDuringCombat", bEnableCombat);
 	ReadBoolSetting(mcmDefault, "ConditionalSettings", "bEnableWhileAutoMoving", bEnableAutoMoving);
 
@@ -848,6 +880,7 @@ void MenuOpenCloseEventHandler::ReadDefaultMCMSettings()
 	ReadFloatSetting(mcmDefault, "PositionSettings", "fRotationAmount", fRotationAmount);
 	ReadFloatSetting(mcmDefault, "PositionSettings", "fTurnSensitivity", fTurnSensitivity);
 
+	ReadBoolSetting(mcmDefault, "GamepadSettings", "bEnableRotating", bGamepadRotating);
 	ReadUint32Setting(mcmDefault, "GamepadSettings", "iGamepadTurnMethod", iGamepadTurnMethod);
 }
 
