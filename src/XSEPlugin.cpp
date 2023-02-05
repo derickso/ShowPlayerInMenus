@@ -60,6 +60,7 @@ EXTERN_C [[maybe_unused]] __declspec(dllexport) bool SKSEAPI SKSEPlugin_Load(con
 	
 	ShowPlayerInMenus::ShowPlayerInMenusHook::InstallHook();
 	ShowPlayerInMenus::FirstPersonStateHook::InstallHook();
+	Item3DControls::InstallHook();
 	//ShowPlayerInMenus::ThirdPersonStateHook::InstallHook();
 	//ShowPlayerInMenus::Actor_SetRotationHook::InstallHook();
 

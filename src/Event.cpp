@@ -264,9 +264,7 @@ auto InputEventHandler::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEven
 				}
 				// don't rotate if item preview is maximized
 				RE::Inventory3DManager* inventory3DManager = RE::Inventory3DManager::GetSingleton();
-				//RE::UserEvents* userEvents = RE::UserEvents::GetSingleton();
-				//RE::IDEvent* idEvent = static_cast<RE::ButtonEvent*>(event);
-				//idEvent->userEvent == userEvents->rotate
+
 				if (inventory3DManager->GetRuntimeData().zoomProgress == 0.0f) {
 					if (MenuOpenCloseEventHandler::iGamepadTurnMethod == 0 && MenuOpenCloseEventHandler::bGamepadRotating) {
 						auto stickEvent = reinterpret_cast<RE::ThumbstickEvent*>(event->AsIDEvent());
@@ -909,6 +907,32 @@ void MenuOpenCloseEventHandler::ReadUint32Setting(CSimpleIniA& a_ini, const char
 	if (bFound) {
 		a_setting = a_ini.GetLongValue(a_sectionName, a_settingName);
 	}
+}
+
+RE::BSEventNotifyControl Item3DControls::ProcessEvent_Hook(RE::InputEvent** a_event, RE::BSTEventSource<RE::InputEvent*>* a_source)
+{
+	if (a_event && *a_event && MenuOpenCloseEventHandler::bGamepadRotating) {
+		for (RE::InputEvent* evn = *a_event; evn; evn = evn->next) {
+			if (evn && evn->HasIDCode()) {
+				RE::UserEvents* userEvents = RE::UserEvents::GetSingleton();
+				RE::IDEvent* idEvent = static_cast<RE::ButtonEvent*>(evn);
+
+				// Disable rotating items when controller turning is enabled
+				RE::Inventory3DManager* inventory3DManager = RE::Inventory3DManager::GetSingleton();
+				if (idEvent->userEvent == userEvents->rotate && inventory3DManager->GetRuntimeData().zoomProgress == 0.0f) {
+					idEvent->userEvent = "";
+				}
+			}
+		}
+	}
+
+	return _ProcessEvent(this, a_event, a_source);
+}
+
+void Item3DControls::InstallHook()
+{
+	REL::Relocation<std::uintptr_t> MenuControlsVtbl{ RE::VTABLE_MenuControls[0] };
+	_ProcessEvent = MenuControlsVtbl.write_vfunc(0x1, &ProcessEvent_Hook);
 }
 
 //constexpr uint32_t hash(const std::string_view data) noexcept {

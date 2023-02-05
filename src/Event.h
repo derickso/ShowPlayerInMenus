@@ -151,3 +151,14 @@ private:
 	float									m_blurRadius;
 };
 
+class Item3DControls : public RE::MenuControls
+{
+public:
+	RE::BSEventNotifyControl ProcessEvent_Hook(RE::InputEvent** a_event, RE::BSTEventSource<RE::InputEvent*>* a_source);
+
+	static void InstallHook();
+
+	using ProcessEvent_t = decltype(static_cast<RE::BSEventNotifyControl (RE::MenuControls::*)(RE::InputEvent* const*, RE::BSTEventSource<RE::InputEvent*>*)>(&RE::MenuControls::ProcessEvent));
+	static inline REL::Relocation<ProcessEvent_t> _ProcessEvent;
+};
+
