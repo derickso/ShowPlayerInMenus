@@ -911,15 +911,15 @@ void MenuOpenCloseEventHandler::ReadUint32Setting(CSimpleIniA& a_ini, const char
 
 RE::BSEventNotifyControl Item3DControls::ProcessEvent_Hook(RE::InputEvent** a_event, RE::BSTEventSource<RE::InputEvent*>* a_source)
 {
+	// Disable rotating items when controller turning is enabled
 	if (a_event && *a_event && MenuOpenCloseEventHandler::bGamepadRotating) {
 		for (RE::InputEvent* evn = *a_event; evn; evn = evn->next) {
 			if (evn && evn->HasIDCode()) {
 				RE::UserEvents* userEvents = RE::UserEvents::GetSingleton();
 				RE::IDEvent* idEvent = static_cast<RE::ButtonEvent*>(evn);
 
-				// Disable rotating items when controller turning is enabled
 				RE::Inventory3DManager* inventory3DManager = RE::Inventory3DManager::GetSingleton();
-				if (idEvent->userEvent == userEvents->rotate && inventory3DManager->GetRuntimeData().zoomProgress == 0.0f) {
+				if (m_inMenu && idEvent && idEvent->userEvent == userEvents->rotate && inventory3DManager && inventory3DManager->GetRuntimeData().zoomProgress == 0.0f) {
 					idEvent->userEvent = "";
 				}
 			}
